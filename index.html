@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#082b2b">
+<meta name="description" content="Enter a living world, grow your village, gather resources, and explore beyond the horizon in Smart Village Simulator.">
+<title>Smart Village Simulator — Enter the World</title>
+<style>
+:root{--cream:#f8f2df;--mint:#b8f2d1;--gold:#ffd47b;--ink:#092727;--glass:rgba(5,29,31,.62)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#082b2b;color:var(--cream);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}
+.hero{min-height:100svh;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;background:linear-gradient(180deg,#0a3037 0%,#176b70 34%,#64b8a4 62%,#f3c77b 100%)}
+.hero:before{content:"";position:absolute;inset:0;z-index:-3;background:radial-gradient(ellipse at 50% 48%,rgba(255,231,157,.45),transparent 30%),linear-gradient(180deg,rgba(4,22,29,.18),transparent 35%,rgba(4,29,27,.3))}
+.sun{position:absolute;width:clamp(90px,15vw,190px);aspect-ratio:1;border-radius:50%;background:#ffe5a2;right:16%;top:16%;box-shadow:0 0 80px 24px #ffe5a255;z-index:-2}
+.ocean{position:absolute;inset:48% 0 0;z-index:-2;background:linear-gradient(180deg,#42a9a4,#0e666a 55%,#073c46);clip-path:polygon(0 7%,12% 1%,25% 8%,39% 0,54% 6%,68% 1%,82% 7%,100% 0,100% 100%,0 100%)}
+.island{position:absolute;z-index:-1;left:50%;top:52%;width:min(1000px,110vw);height:44%;transform:translateX(-50%);background:linear-gradient(180deg,#4c9b55 0%,#236b48 43%,#124d43 100%);border-radius:50% 50% 15% 15%/36% 36% 10% 10%;box-shadow:0 -15px 0 #d5d18c,0 25px 50px #062a2d88}
+.island:before{content:"";position:absolute;left:7%;top:-10%;width:86%;height:28%;border-radius:50%;background:#e6d8a1}
+.palm{position:absolute;z-index:0;width:170px;height:250px;bottom:16%;filter:drop-shadow(8px 10px 8px #062d2b55)}
+.palm.left{left:4%;transform:scale(.9) rotate(-5deg)}.palm.right{right:4%;transform:scale(1.15) rotate(8deg)}
+.palm .trunk{position:absolute;width:15px;height:180px;left:75px;bottom:0;background:linear-gradient(90deg,#63462c,#bd8750,#5c422c);border-radius:100% 100% 0 0;transform:rotate(9deg);transform-origin:bottom}
+.palm .leaf{position:absolute;width:110px;height:28px;left:65px;bottom:164px;background:linear-gradient(180deg,#70c46b,#16744b);border-radius:100% 0 100% 0;transform-origin:0 100%;clip-path:polygon(0 100%,12% 45%,35% 8%,100% 0,62% 35%,30% 65%)}
+.palm .leaf:nth-child(2){transform:rotate(-30deg)}.palm .leaf:nth-child(3){transform:rotate(25deg) scaleX(-1)}.palm .leaf:nth-child(4){transform:rotate(-65deg)}.palm .leaf:nth-child(5){transform:rotate(65deg) scaleX(-1)}.palm .leaf:nth-child(6){transform:rotate(155deg)}
+nav{display:flex;justify-content:space-between;align-items:center;width:min(1160px,92%);margin:0 auto;padding:24px 0;gap:20px}
+.brand{font-weight:900;letter-spacing:.08em;font-size:14px;display:flex;align-items:center;gap:10px}.brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#ffe29a,#6ad49a);display:grid;place-items:center;color:#12372e;font-size:21px}
+.navlinks{display:flex;gap:28px;color:#e6f8ec;font-size:14px}.navlinks a:hover{color:var(--gold)}
+.hero-copy{width:min(900px,90%);margin:clamp(38px,7vh,90px) auto 0;text-align:center;z-index:2}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;border:1px solid #ffffff50;background:#062d2d55;padding:8px 13px;border-radius:100px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;backdrop-filter:blur(10px)}
+h1{font-size:clamp(44px,8.5vw,100px);line-height:.94;letter-spacing:-.065em;margin:24px 0 18px;text-shadow:0 6px 24px #052c2b55}h1 span{color:#ffe19a}
+.hero-copy p{max-width:620px;margin:0 auto;color:#f0f7e8;font-size:clamp(15px,2vw,19px);line-height:1.7;text-shadow:0 2px 12px #082b2b66}
+.ctas{display:flex;justify-content:center;flex-wrap:wrap;gap:13px;margin-top:30px}
+.btn{border:1px solid #ffffff5c;border-radius:999px;padding:15px 25px;font-weight:850;display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:transform .2s,filter .2s}
+.btn:hover{transform:translateY(-3px);filter:brightness(1.08)}.btn.primary{background:linear-gradient(135deg,#ffe49c,#ffc45c);color:#173b30;box-shadow:0 10px 35px #f4be5b44;border-color:#ffe9b5}.btn.secondary{background:#082f2e88;backdrop-filter:blur(12px)}
+.hero-foot{margin:auto auto 26px;display:flex;gap:22px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:12px;color:#f2f7e8;z-index:2;text-shadow:0 2px 8px #07302d}
+.scroll{display:flex;align-items:center;gap:8px;opacity:.8}.dot{width:6px;height:6px;background:#ffe09a;border-radius:50%;box-shadow:0 0 12px #ffe09a}
+section{padding:95px 0}.wrap{width:min(1120px,90%);margin:auto}.section-tag{color:#a6e7c2;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:900}.section-head{display:flex;justify-content:space-between;align-items:end;gap:28px;margin-bottom:34px}.section-head h2{font-size:clamp(32px,5vw,55px);letter-spacing:-.045em;line-height:1;margin:12px 0 0}.section-head p{max-width:430px;color:#b9d4c9;line-height:1.7;margin:0}
+.features{background:linear-gradient(180deg,#082b2b,#0b3733)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature-card{border:1px solid #ffffff18;border-radius:24px;padding:26px;background:linear-gradient(145deg,#17463d99,#0a2c2b);min-height:230px;transition:transform .25s,border-color .25s}.feature-card:hover{transform:translateY(-5px);border-color:#b9e9bd66}.icon{width:52px;height:52px;border-radius:17px;background:#d2f2be18;border:1px solid #d2f2be28;display:grid;place-items:center;font-size:26px}.feature-card h3{font-size:21px;margin:22px 0 9px}.feature-card p{color:#b8d3c7;line-height:1.7;font-size:14px;margin:0}
+.explore{background:#e8e4c8;color:#16382f}.explore .section-tag{color:#337b54}.explore .section-head p{color:#4b6b5b}
+.world-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.world-panel{min-height:340px;border-radius:28px;overflow:hidden;position:relative;padding:28px;display:flex;flex-direction:column;justify-content:end;background:linear-gradient(180deg,transparent,#062a2acc),radial-gradient(ellipse at 50% 30%,#f8d99a,#4b9f8c 43%,#13545a 80%);color:white}.world-panel:before{content:"";position:absolute;inset:0;background:linear-gradient(130deg,#ffffff10,transparent 55%);pointer-events:none}.world-panel.large{min-height:420px;background:linear-gradient(180deg,transparent,#062a2acc),radial-gradient(ellipse at 55% 28%,#ffe6a5,#5ab18e 36%,#17646b 73%,#0b373f)}.world-panel h3{font-size:30px;margin:0 0 8px;position:relative}.world-panel p{color:#e0f0e6;line-height:1.6;max-width:440px;margin:0;position:relative}.world-panel .mini{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:#ffe29a;margin-bottom:10px;position:relative}
+.world-art{position:absolute;top:28px;right:25px;font-size:95px;filter:drop-shadow(0 12px 18px #082b2b55);opacity:.9}.world-panel.large .world-art{font-size:145px;top:35px;right:8%}
+.play-section{background:radial-gradient(ellipse at 50% 0%,#286b57,#082b2b 68%);text-align:center}.play-section h2{font-size:clamp(35px,6vw,64px);letter-spacing:-.05em;margin:14px 0}.play-section p{max-width:610px;margin:0 auto;color:#c0dbce;line-height:1.7}.play-section .btn{margin-top:28px}
+footer{border-top:1px solid #ffffff18;background:#062322;padding:24px 5%;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;color:#8eb3a5;font-size:12px}
+#gameScreen{display:none;position:fixed;inset:0;z-index:20;background:#071b1b}#gameScreen iframe{width:100%;height:100%;border:0}#closeGame{position:absolute;z-index:3;top:12px;right:12px;border:1px solid #ffffff55;background:#102e2bd9;color:white;border-radius:999px;padding:10px 15px;font-weight:800;backdrop-filter:blur(8px)}
+@media(max-width:760px){nav{padding:17px 0}.navlinks{gap:14px;font-size:12px}.navlinks a:nth-child(2){display:none}.hero-copy{margin-top:6vh}.palm{transform:scale(.65)!important;transform-origin:bottom}.palm.left{left:-28px}.palm.right{right:-28px}.island{top:58%;height:38%}.hero-foot{margin-bottom:18px;gap:12px}.section-head{display:block}.section-head p{margin-top:18px}.cards{grid-template-columns:1fr}.feature-card{min-height:0}.world-grid{grid-template-columns:1fr}.world-panel,.world-panel.large{min-height:320px}section{padding:68px 0}}
+@media(max-width:430px){.navlinks a:last-child{display:none}.brand{font-size:11px}.brand-mark{width:33px;height:33px}.hero-copy{margin-top:7vh}h1{font-size:48px}.hero-copy p{font-size:14px}.btn{padding:13px 19px}.palm{opacity:.75}.hero-foot{font-size:10px}}
+</style>
+</head>
+<body>
+<header class="hero" id="home">
+  <div class="sun"></div><div class="ocean"></div><div class="island"></div>
+  <div class="palm left"><div class="trunk"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
+  <div class="palm right"><div class="trunk"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
+  <nav><a class="brand" href="#home"><span class="brand-mark">🌿</span> SMART VILLAGE SIMULATOR</a><div class="navlinks"><a href="#features">Features</a><a href="#explore">Explore</a><a href="#play">Play</a></div></nav>
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="dot"></span> YOUR WORLD. YOUR ADVENTURE.</div>
+    <h1>Build a life.<br><span>Grow a world.</span></h1>
+    <p>Start with a little land and a big dream. Grow crops, manage water, earn coins, upgrade your farm, and take your harvest out into the wider world.</p>
+    <div class="ctas"><button class="btn primary" data-play>▶ &nbsp; PLAY NOW</button><a class="btn secondary" href="#features">Discover the world&nbsp; ↓</a></div>
+  </div>
+  <div class="hero-foot"><span>🌱 FARM & GROW</span><span>•</span><span>🚜 DRIVE & DELIVER</span><span>•</span><span>🏡 BUILD YOUR FUTURE</span><span class="scroll">SCROLL TO EXPLORE ↓</span></div>
+</header>
+<main>
+<section class="features" id="features"><div class="wrap">
+  <div class="section-head"><div><div class="section-tag">Made for explorers</div><h2>Every day brings<br>a new opportunity.</h2></div><p>Make smart choices, turn simple resources into progress, and build a thriving village one harvest at a time.</p></div>
+  <div class="cards">
+    <article class="feature-card"><div class="icon">🌾</div><h3>Gather & Grow</h3><p>Plant seeds, water your crops, wait for them to mature, and harvest to build up your stores.</p></article>
+    <article class="feature-card"><div class="icon">💧</div><h3>Manage Resources</h3><p>Keep an eye on your water supply and use the solar pump to refill it. Plan each growing cycle wisely.</p></article>
+    <article class="feature-card"><div class="icon">🪙</div><h3>Trade & Upgrade</h3><p>Sell crops, hire workers, expand your farmland, unlock poultry, and deliver grain to a neighbouring village.</p></article>
+  </div>
+</div></section>
+<section class="explore" id="explore"><div class="wrap">
+  <div class="section-head"><div><div class="section-tag">Beyond your doorstep</div><h2>A world worth<br>exploring.</h2></div><p>Explore the village on foot or take the wheel. Find your fields, visit the storehouse, and follow the road to the distant market.</p></div>
+  <div class="world-grid">
+    <article class="world-panel large"><div class="world-art">🌴</div><div class="mini">01 / Home territory</div><h3>Your Village</h3><p>Make the land your own: grow crops, keep your water flowing, and expand your farm as your savings grow.</p></article>
+    <article class="world-panel"><div class="world-art">🚜</div><div class="mini">02 / The trade route</div><h3>Road to the Market</h3><p>Hop into a tractor or truck, load grain sacks, and travel along the highway to sell your cargo.</p></article>
+  </div>
+</div></section>
+<section class="play-section" id="play"><div class="wrap"><div class="section-tag">Your next chapter starts here</div><h2>Ready to make it yours?</h2><p>Jump into the game and start building your farming story. Your first harvest is waiting.</p><button class="btn primary" data-play>▶ &nbsp; PLAY NOW</button></div></section>
+</main>
+<footer><span>© 2026 Smart Village Simulator</span><span>Built for curious minds and big dreams 🌿</span></footer>
+<div id="gameScreen" aria-label="Game player"><button id="closeGame">✕ Back to website</button><iframe id="gameFrame" title="Smart Village Simulator game" allow="fullscreen; autoplay"></iframe></div>
+<script>
+const screen=document.getElementById('gameScreen'),frame=document.getElementById('gameFrame');
+function play(){frame.src='game.html';screen.style.display='block';document.body.style.overflow='hidden'}
+function closeGame(){screen.style.display='none';frame.src='about:blank';document.body.style.overflow=''}
+document.querySelectorAll('[data-play]').forEach(b=>b.addEventListener('click',play));
+document.getElementById('closeGame').addEventListener('click',closeGame);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&screen.style.display==='block')closeGame()});
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Smart Village Simulator</title>
+<style>
+:root{--panel:rgba(10,31,32,.91);--line:rgba(255,255,255,.18);--gold:#ffd166;--green:#79e08a}
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#9bd8f0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
+#game{position:fixed;inset:0}canvas{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 32px #102b315c;backdrop-filter:blur(8px)}
+#hud{position:fixed;left:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;max-width:calc(100vw - 24px);pointer-events:none}
+.stat{padding:9px 12px;font-weight:750;font-size:14px}.stat span{color:var(--gold)}
+#actions button{min-height:42px}
+#vehicleInfo{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);padding:10px 16px;display:none;font-size:13px;font-weight:800;letter-spacing:.04em;white-space:nowrap;z-index:4}
+#featureNote{position:fixed;right:12px;top:76px;padding:9px 12px;font-size:11px;max-width:230px;line-height:1.45}
+@media(max-width:600px){#featureNote{top:180px;right:8px;max-width:150px;font-size:10px}}
+#title{position:fixed;top:12px;left:50%;transform:translateX(-50%);padding:9px 16px;text-align:center;white-space:nowrap;pointer-events:none}
+#title strong{display:block;letter-spacing:.08em;font-size:13px}#title small{font-size:10px;opacity:.8}
+#help{position:fixed;top:68px;left:12px;padding:10px 12px;max-width:250px;font-size:12px;line-height:1.45}
+#message{position:fixed;left:50%;top:23%;transform:translateX(-50%);padding:10px 16px;text-align:center;font-weight:750;max-width:90vw;opacity:0;transition:opacity .2s;pointer-events:none}
+#actions{position:fixed;right:12px;bottom:14px;display:grid;grid-template-columns:repeat(2,minmax(82px,108px));gap:8px;max-height:72vh;overflow:auto}
+button{background:linear-gradient(180deg,#28785b,#174638);border:1px solid #ffffff35;border-radius:13px;background:#173a31eF;color:white;padding:12px 9px;font-weight:750;font-size:13px;box-shadow:0 4px 0 #0c241f;cursor:pointer;touch-action:manipulation}
+button:active{transform:translateY(2px);box-shadow:0 2px 0 #0c241f}button:disabled{opacity:.45}
+#move{position:fixed;left:14px;bottom:20px;width:128px;height:128px;border-radius:50%;background:#173a3140;border:2px solid #ffffff65;touch-action:none}
+#stick{position:absolute;width:54px;height:54px;left:35px;top:35px;border-radius:50%;background:#ffffffb8;border:2px solid #fff;box-shadow:0 4px 12px #0003}
+#bottomnote{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#18342e;background:#ffffffa6;padding:4px 8px;border-radius:8px;white-space:nowrap}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(#0a262a55,#071c1caa);padding:20px}
+#card{max-width:520px;width:100%;padding:24px;text-align:center}#card h1{margin:0 0 8px;font-size:clamp(26px,6vw,42px);line-height:1.05}#card p{line-height:1.55;color:#e5f5e8}#card button{background:#f3c95f;color:#20372b;font-size:16px;padding:13px 22px;margin-top:8px}
+@media(max-width:600px){#title{top:86px}#help{top:132px;max-width:205px;font-size:11px}#hud{max-width:calc(100vw - 24px)}.stat{font-size:12px;padding:8px 9px}#actions{grid-template-columns:repeat(2,82px);gap:7px;bottom:12px;right:10px}button{font-size:12px;padding:11px 5px}#move{width:112px;height:112px;bottom:14px}#stick{left:28px;top:28px;width:52px;height:52px}#bottomnote{display:none}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+  <div class="panel stat">🪙 Coins: <span id="coins">0</span></div>
+  <div class="panel stat">💧 Water: <span id="water">10</span>/10</div>
+  <div class="panel stat">🌾 Stored: <span id="harvest">0</span></div><div class="panel stat">📦 Cargo: <span id="cargo">0</span></div>
+  <div class="panel stat">👷 Workers: <span id="workers">0</span></div>
+  <div class="panel stat">🐔 Poultry: <span id="poultry">No</span></div>
+  <div class="panel stat">🚜 Vehicle: <span id="vehicleStat">On foot</span></div>
+</div>
+<div id="title" class="panel"><strong>SMART VILLAGE</strong><small>Grow smart. Live green.</small></div>
+<div id="help" class="panel">🌱 Walk to a glowing farm plot, then tap <b>Plant</b>.<br>💧 Water crops as they grow.<br>🌾 Harvest golden crops, load grain sacks, then deliver them to the next village.<br>🗺️ Drive along the long highway to the distant neighbouring village market.<br>🧑‍🌾 Hire workers, buy up to 12 new fields, and unlock poultry farming. Houses and buildings block movement.<br><span style="opacity:.8">Keyboard: WASD / arrows · E enter vehicle · C camera</span></div>
+<div id="featureNote" class="panel">🏚️ Storehouse: near the village road<br>🛣️ Long highway to the distant village<br>🌾 Expand your farm up to 12 times<br>🧱 Solid building collisions enabled</div>
+<div id="message" class="panel"></div><div id="vehicleInfo" class="panel">W accelerate · S brake/reverse · A/D steer · E exit · C camera</div>
+<div id="move" aria-label="Movement joystick"><div id="stick"></div></div>
+<div id="actions">
+  <button id="plant">🌱 Plant</button><button id="waterBtn">💧 Water</button>
+  <button id="harvestBtn">🌾 Harvest</button><button id="pumpBtn">☀️ Solar Pump</button>
+  <button id="sellBtn">🛒 Sell crops</button><button id="hireBtn">🧑‍🌾 Hire worker</button>
+  <button id="expandBtn">🧱 Expand farm</button><button id="poultryBtn">🐔 Poultry farm</button>
+  <button id="vehicleBtn">🚜 Enter vehicle (E)</button><button id="mapBtn">🗺️ Village map</button><button id="loadBtn">📦 Load grain sacks</button><button id="travelBtn">🚚 Deliver to village</button>
+</div>
+<div id="bottomnote">Move near a farm plot to interact • Collect 3 harvests to win</div>
+<div id="overlay"><div id="card" class="panel">
+  <div style="font-size:42px;margin-bottom:8px">🌞 🌾 🏡</div>
+  <h1>Smart Village<br>Simulator</h1>
+  <p>Build a greener village, grow crops, manage water, and harvest to earn coins. Harvest crops, load grain sacks, deliver them to the neighbouring village market, hire workers, expand your farm, and unlock poultry farming!</p>
+  <p style="font-size:12px">Enhanced 3D farm • Village trade route • Grain cargo • Workers • Poultry</p>
+  <button id="start">Start farming</button>
+</div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const host=document.getElementById('game');
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x91c9e8); scene.fog=new THREE.Fog(0x91c9e8,55,145);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,420);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;renderer.physicallyCorrectLights=true;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;host.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd9efff,0x586344,1.7));
+const sun=new THREE.DirectionalLight(0xfff1cc,2.5);sun.position.set(-18,28,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00025;scene.add(sun);
+const mat=(c,rough=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:rough});
+const M={grass:mat(0x70b85c),grass2:mat(0x8acb68),soil:mat(0x795039),soil2:mat(0x936744),wood:mat(0x9a6036),cream:mat(0xffe3a5),wall:mat(0xf2c77d),roof:mat(0xb9513d),leaf:mat(0x2e8548),leaf2:mat(0x4ca654),trunk:mat(0x76502e),water:mat(0x3cbce8,.3),gold:mat(0xf5c64a),dark:mat(0x34483a),white:mat(0xf6f5dd),blue:mat(0x4d88d5),solar:mat(0x244a79,.35)};
+function box(parent,w,h,d,material,x,y,z,cast=true){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=true;parent.add(o);return o}
+function cylinder(parent,rt,rb,h,material,x,y,z,seg=12){let o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function sphere(parent,r,material,x,y,z,scale=[1,1,1]){let o=new THREE.Mesh(new THREE.SphereGeometry(r,12,10),material);o.position.set(x,y,z);o.scale.set(...scale);o.castShadow=true;parent.add(o);return o}
+const ground=box(scene,270,.5,150,M.grass,0,-.28,0,false);
+for(let i=0;i<24;i++){let x=(Math.random()-.5)*95,z=(Math.random()-.5)*95;if(Math.abs(x)<15&&Math.abs(z)<14)continue;let patch=new THREE.Mesh(new THREE.CircleGeometry(1.5+Math.random()*2,12),M.grass2);patch.rotation.x=-Math.PI/2;patch.position.set(x,.0,z);patch.receiveShadow=true;scene.add(patch)}
+// distant hills
+for(let i=0;i<14;i++){let a=i/14*Math.PI*2;let hill=sphere(scene,1,mat(i%2?0x719b70:0x85ad7a),Math.cos(a)*43,1.8,Math.sin(a)*43,[7+Math.random()*4,3+Math.random()*3,5]);}
+function tree(x,z,s=1){
+ const trunk=cylinder(scene,.18*s,.34*s,2.25*s,M.trunk,x,.96*s,z,12);trunk.rotation.z=(Math.sin(x*2+z)*.09);
+ for(let b=0;b<3;b++){let br=cylinder(scene,.065*s,.12*s,.95*s,M.trunk,x+(b-1)*.25*s,1.65*s,z+(b%2?.18:-.18)*s,8);br.rotation.z=(b-1)*-.45;}
+ const greens=[0x2d7040,0x39834a,0x4b9652,0x5a9c54,0x2e7945];
+ for(let i=0;i<13;i++){let a=i*2.399,rr=(.22+((i*7)%11)/18)*s,yy=(1.9+((i*5)%7)*.16)*s;let leaf=sphere(scene,(.48+((i*3)%5)*.055)*s,mat(greens[i%greens.length]),x+Math.cos(a)*rr,yy,z+Math.sin(a)*rr,[1.0, .85+((i%3)*.12), .95]);leaf.rotation.set((i%3)*.15, a, (i%4)*.12);}
+}
+for(let i=0;i<38;i++){let x=(Math.random()-.5)*78,z=(Math.random()-.5)*78;if(Math.abs(x)<17&&Math.abs(z)<16)continue;tree(x,z,.65+Math.random()*.6)}
+// Main village roads and solid-building collision registry.
+const solidColliders=[];
+box(scene,5,.06,62,mat(0xc8b18a),0,.02,0,false);box(scene,40,.06,4,mat(0xc8b18a),0,.025,0,false);
+function house(x,z,s=1){
+ let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ solidColliders.push({x,z,hx:2.25*s,hz:2.0*s});
+ const wallMat=mat([0xf0d9a4,0xe6c38a,0xd8c4a3,0xf4e6c8][Math.floor(Math.abs(x*7+z*3))%4]);
+ box(g,3.4*s,2.35*s,3.0*s,wallMat,0,1.18*s,0);
+ box(g,3.58*s,.16*s,3.18*s,mat(0x9b805e),0,.18*s,0);
+ // Front verandah and columns
+ box(g,3.65*s,.13*s,.9*s,mat(0xc7a77a),0,.68*s,1.72*s);
+ for(let xx of [-1.45,1.45])cylinder(g,.075*s,.095*s,1.35*s,mat(0xf0e4c8),xx,.68*s,1.62*s,10);
+ // pitched roof panels
+ let roofA=box(g,3.9*s,.16*s,1.95*s,mat(0x99463b),0,2.45*s,-.62*s);roofA.rotation.x=-.42;
+ let roofB=box(g,3.9*s,.16*s,1.95*s,mat(0xb45442),0,2.45*s,.62*s);roofB.rotation.x=.42;
+ box(g,4.0*s,.18*s,.16*s,mat(0x63372e),0,2.88*s,0);
+ // door, framed windows, sills
+ box(g,.68*s,1.25*s,.13*s,mat(0x5a3928),.45*s,.72*s,1.54*s);
+ box(g,.52*s,1.05*s,.06*s,mat(0x9c6b42),.45*s,.72*s,1.62*s);
+ for(let wx of [-.95,1.15]){box(g,.72*s,.72*s,.1*s,mat(0xeee0b9),wx,1.42*s,1.54*s);box(g,.54*s,.54*s,.06*s,mat(0x5f9cb5),wx,1.42*s,1.61*s);box(g,.07*s,.62*s,.07*s,mat(0xf4e8d0),wx,1.42*s,1.66*s);box(g,.62*s,.06*s,.07*s,mat(0xf4e8d0),wx,1.42*s,1.66*s);box(g,.86*s,.09*s,.18*s,mat(0x99734d),wx,1.02*s,1.61*s);}
+ // small side window and chimney
+ box(g,.1*s,.6*s,.62*s,mat(0x6a4933),-1.76*s,1.4*s,0);
+ let chimney=box(g,.36*s,.8*s,.38*s,mat(0x9e5442),1.15*s,3.05*s,-.5*s);chimney.rotation.z=-.1;
+ return g
+}
+house(-7,-7,1.2);house(8,-9,.9);house(-10,5,.8);
+function makeWell(){cylinder(scene,1.15,1.2,.6,mat(0xb4b7a7),-7,.3,4,16);cylinder(scene,.75,.75,.2,M.water,-7,.63,4,16);cylinder(scene,.09,.09,2,M.wood,-8.1,1.4,4);cylinder(scene,.09,.09,2,M.wood,-5.9,1.4,4);box(scene,2.5,.12,.15,M.wood,-7,2.35,4);box(scene,.8,.5,.65,mat(0x58a9ce),-7,2.65,4)}makeWell();
+// solar array
+for(let i=0;i<3;i++){let x=7+i*1.2;box(scene,.95,.08,1.5,M.solar,x,.85,4);let leg=box(scene,.09,.7,.09,M.dark,x, .43,4);leg.rotation.x=-.2}
+box(scene,4,.25,2.8,mat(0xb5b8ad),8,.15,4,false);
+// fields and crop plots
+const plots=[];const plotPositions=[[-4,5],[0,5],[4,5],[-4,10],[0,10],[4,10]];
+for(let i=0;i<plots.length+6;i++){}
+for(let i=0;i<plotPositions.length;i++){let [x,z]=plotPositions[i];let group=new THREE.Group();group.position.set(x,0,z);scene.add(group);box(group,3.2,.18,3.2,M.soil,0,.1,0,false);box(group,3.0,.05,3.0,M.soil2,0,.21,0,false);for(let r=-1;r<=1;r++){box(group,2.8,.035,.12,M.soil,0,.25,r*.85,false)}let marker=sphere(group,.13,mat(0x8cf28c),-1.25,.35,-1.25,[1,1,1]);marker.material.emissive=new THREE.Color(0x246b2c);plots.push({x,z,group,state:0,growth:0,plants:[],marker})}
+function cropVisual(p){for(const o of p.plants)p.group.remove(o);p.plants=[];if(p.state===0)return;const n=9;for(let i=0;i<n;i++){let x=((i%3)-1)*.78,z=(Math.floor(i/3)-1)*.78;let h=p.state===1?.28:p.state===2?.62:.92;let stem=cylinder(p.group,.025,.04,h,mat(0x3f8d39),x,.25+h/2,z,6);p.plants.push(stem);let leaves=2;for(let j=0;j<leaves;j++){let leaf=sphere(p.group,.18,p.state===3?M.gold:M.leaf2,x+(j?-.13:.13),.35+h*.6,z,[.35,.14,.75]);leaf.rotation.z=j?-.45:.45;p.plants.push(leaf)}if(p.state===3){for(let j=0;j<3;j++)p.plants.push(sphere(p.group,.12,M.gold,x,.28+h*.83,z+(j-1)*.12,[.8,1.4,.8]))}}}
+
+// Storehouse, market stalls, villagers and poultry coop.
+let storehouse,marketGroup,coopGroup;
+// Grain storehouse with pitched roof, doors and visible stacked sacks.
+storehouse=new THREE.Group();storehouse.position.set(12,0,-5);scene.add(storehouse);solidColliders.push({x:12,z:-5,hx:3.1,hz:2.6});
+box(storehouse,5,3.1,4,M.cream,0,1.55,0);box(storehouse,1.5,2,.15,M.wood,0,1,2.08);
+let barnRoof=new THREE.Mesh(new THREE.ConeGeometry(3.7,1.7,4),mat(0x8f3930));barnRoof.rotation.y=Math.PI/4;barnRoof.position.y=3.8;barnRoof.scale.z=.8;barnRoof.castShadow=true;storehouse.add(barnRoof);
+for(let i=0;i<3;i++)box(storehouse,.6,.55,.5,mat(0xd9bd8a),-1.35+i*1.35,.38,1.3);
+// Market stalls
+marketGroup=new THREE.Group();marketGroup.position.set(-12,0,-3);scene.add(marketGroup);solidColliders.push({x:-12,z:-3,hx:3.1,hz:1.8});
+box(marketGroup,5,.18,2.4,M.wood,0,1.1,0);
+for(let x of [-2,0,2]){box(marketGroup,.12,1.4,.12,M.wood,x,1.65,0);box(marketGroup,.12,1.4,.12,M.wood,x,1.65,-1.1)}
+box(marketGroup,5,.18,1.5,mat(0xd94f43),0,2.45,-.55);
+for(let i=0;i<5;i++){sphere(marketGroup,.25,i%2?M.gold:mat(0x68b84b),-1.7+i*.85,1.42,.45,[1,1,1])}
+function makeVillager(x,z,shirtColor){
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);const sh=mat(shirtColor),sk=mat(0xc88e68),tr=mat(0x58402e);
+ sphere(g,.34,sh,0,.98,0,[.9,1.2,.65]);cylinder(g,.09,.1,.18,sk,0,1.4,0,10);sphere(g,.245,sk,0,1.62,0,[.95,1.08,.9]);sphere(g,.25,tr,0,1.79,-.025,[1,.42,1]);
+ for(let side of [-1,1]){let arm=cylinder(g,.09,.11,.52,sh,side*.34,1.02,0,10);arm.rotation.z=side*.18;cylinder(g,.12,.13,.5,mat(0x35434c),side*.14,.34,0,10);sphere(g,.09,sk,side*.36,.72,.01)}
+ return g;
+}
+const villagers=[makeVillager(-14,-1,0x4b8dce),makeVillager(-10,-1,0xd9a441),makeVillager(10,-2,0x5e9b58),makeVillager(14,2,0xc66b56)];
+function makeCoop(){
+ coopGroup=new THREE.Group();coopGroup.position.set(15,0,5);scene.add(coopGroup);solidColliders.push({x:15,z:5,hx:2.5,hz:2});
+ box(coopGroup,4,1.8,3,M.cream,0,.9,0);let roof=new THREE.Mesh(new THREE.ConeGeometry(2.8,1.2,4),mat(0x9b4938));roof.rotation.y=Math.PI/4;roof.position.y=2.4;roof.scale.z=.8;coopGroup.add(roof);
+ box(coopGroup,1.2,.9,.12,M.wood,0,.48,1.56);
+ for(let i=0;i<3;i++){let chicken=sphere(coopGroup,.25,mat(0xf4eee0),-1+i,1.35,.6,[1,.8,1]);sphere(coopGroup,.09,mat(0xd84b32),-1+i,1.48,.82,[1,.5,.5]);}
+}
+function addExtraPlot(n){
+ const positions=[[8,10],[8,14],[12,10],[16,10],[16,14],[20,10],[20,14],[24,10],[24,14],[28,10],[28,14],[32,10]];
+ const [x,z]=positions[n-1]||[32,14];
+ let group=new THREE.Group();group.position.set(x,0,z);scene.add(group);
+ box(group,3.5,.18,3.5,M.soil,0,.1,0,false);box(group,3.25,.05,3.25,M.soil2,0,.21,0,false);
+ for(let r=-1;r<=1;r++)box(group,3.0,.035,.12,M.soil,0,.25,r*.95,false);
+ // Low field markers and a small boundary fence make purchased land visibly distinct.
+ for(const side of [-1,1]){box(group,.07,.48,.07,M.wood,side*1.95,.24,0,false);box(group,4,.06,.06,M.wood,0,.35,side*1.95,false)}
+ let marker=sphere(group,.13,mat(0x8cf28c),-1.35,.35,-1.35);marker.material.emissive=new THREE.Color(0x246b2c);
+ plots.push({x,z,group,state:0,growth:0,plants:[],marker});
+}
+
+const player=new THREE.Group();scene.add(player);
+const skin=mat(0xc98e67),shirt=mat(0x286eb0),pants=mat(0x263d55),boots=mat(0x3a3027),hair=mat(0x30251f);
+const body=sphere(player,.39,shirt,0,1.0,0,[.9,1.25,.62]);
+const neck=cylinder(player,.09,.1,.18,skin,0,1.42,0,12);
+const head=sphere(player,.27,skin,0,1.68,0,[.9,1.08,.92]);sphere(player,.28,hair,0,1.84,-.035,[1,.48,1]);
+sphere(player,.035,mat(0x231c18),-.09,1.69,.235);sphere(player,.035,mat(0x231c18),.09,1.69,.235);
+const armL=cylinder(player,.105,.13,.58,shirt,-.39,1.0,0,12);armL.rotation.z=-.12;const armR=cylinder(player,.105,.13,.58,shirt,.39,1.0,0,12);armR.rotation.z=.12;
+sphere(player,.11,skin,-.42,.68,.02);sphere(player,.11,skin,.42,.68,.02);
+const legL=cylinder(player,.13,.15,.55,pants,-.16,.36,0,12);const legR=cylinder(player,.13,.15,.55,pants,.16,.36,0,12);
+box(player,.19,.12,.32,boots,-.16,.08,-.04);box(player,.19,.12,.32,boots,.16,.08,-.04);
+player.position.set(0,0,-2);
+// ---------------- DETAILED, DRIVABLE VEHICLES ----------------
+const rubber=mat(0x202522),tread=mat(0x343834),metal=mat(0x7c8583,.48),chrome=mat(0xc4ccca,.24),glass= new THREE.MeshStandardMaterial({color:0x8bc9db,roughness:.18,metalness:.15,transparent:true,opacity:.58}),tractorRed=mat(0xc94b32,.42),tractorDark=mat(0x7f2c20,.5),lamp= new THREE.MeshStandardMaterial({color:0xfff0b2,emissive:0x6d5825,roughness:.25}),truckBlue=mat(0x2f6fa7,.42),cargoWood=mat(0x9c7044);
+function mesh(parent,geo,material,x,y,z){const o=new THREE.Mesh(geo,material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function wheel(parent,r,width,x,y,z,withTread=true){
+ const pivot=new THREE.Group();pivot.position.set(x,y,z);parent.add(pivot);
+ const tire=mesh(pivot,new THREE.CylinderGeometry(r,r,width,40,2),rubber,0,0,0);tire.rotation.z=Math.PI/2;
+ const sidewall=mesh(pivot,new THREE.CylinderGeometry(r*.78,r*.78,width*1.015,32,1),mat(0x292d2b,.94),0,0,0);sidewall.rotation.z=Math.PI/2;
+ const rim=mesh(pivot,new THREE.CylinderGeometry(r*.59,r*.59,width*1.06,32),metal,0,0,0);rim.rotation.z=Math.PI/2;
+ const inner=mesh(pivot,new THREE.CylinderGeometry(r*.43,r*.43,width*1.075,24),mat(0x343b3a,.52),0,0,0);inner.rotation.z=Math.PI/2;
+ const hub=mesh(pivot,new THREE.CylinderGeometry(r*.24,r*.24,width*1.12,20),chrome,0,0,0);hub.rotation.z=Math.PI/2;
+ for(let i=0;i<10;i++){const a=i*Math.PI/5;const bolt=mesh(pivot,new THREE.SphereGeometry(r*.045,8,6),chrome,Math.cos(a)*r*.34,Math.sin(a)*r*.34,width*.58);}
+ if(withTread){for(let i=0;i<24;i++){const a=i*Math.PI/12;const lug=mesh(pivot,new THREE.BoxGeometry(r*.20,width*1.12,r*.115),tread,Math.cos(a)*r*.91,Math.sin(a)*r*.91,0);lug.rotation.z=a;lug.rotation.x=(i%2?-.12:.12);}}
+ return pivot
+}
+function makeTractor(){const root=new THREE.Group();root.position.set(2.8,0,-2);scene.add(root);const model=new THREE.Group();root.add(model);
+ mesh(model,new THREE.BoxGeometry(1.18,.38,2.15),tractorDark,0,.78,0);
+ // Sculpted bonnet: rounded body, raised top, front grille and bumper
+ const bonnet=mesh(model,new THREE.CapsuleGeometry(.48,.9,5,12),tractorRed,0,1.18,-.55);bonnet.rotation.x=Math.PI/2;bonnet.scale.set(1,.72,1.15);
+ mesh(model,new THREE.BoxGeometry(.98,.42,.72),tractorRed,0,1.16,-1.03);
+ const hoodTop=mesh(model,new THREE.SphereGeometry(.48,24,16),tractorRed,0,1.32,-.52);hoodTop.scale.set(1.0,.32,1.18);
+ mesh(model,new THREE.BoxGeometry(.88,.08,.12),chrome,0,1.37,-1.43);
+ for(let side of [-1,1]){const lampHousing=mesh(model,new THREE.CylinderGeometry(.15,.16,.09,20),tractorDark,side*.4,1.38,-1.43);lampHousing.rotation.x=Math.PI/2;const light=mesh(model,new THREE.CircleGeometry(.105,20),lamp,side*.4,1.38,-1.49);light.rotation.y=Math.PI;}
+ mesh(model,new THREE.BoxGeometry(1.16,.08,.16),metal,0,.68,-1.52);
+ mesh(model,new THREE.BoxGeometry(1.04,.11,.12),metal,0,.91,-1.47);
+ mesh(model,new THREE.BoxGeometry(.78,.34,.055),mat(0x252b2b,.45),0,1.12,-1.47);
+ for(let i=0;i<7;i++)mesh(model,new THREE.BoxGeometry(.045,.29,.025),chrome,-.29+i*.097,1.12,-1.505);
+ for(let side of [-1,1]){mesh(model,new THREE.CylinderGeometry(.115,.115,.06,16),lamp,side*.39,1.38,-1.46).rotation.x=Math.PI/2;mesh(model,new THREE.BoxGeometry(.08,.45,.08),tractorDark,side*.52,.82,-.52);}
+ // seat, steering wheel and operator platform
+ mesh(model,new THREE.BoxGeometry(.68,.12,.72),metal,0,.88,.5);mesh(model,new THREE.BoxGeometry(.48,.17,.42),mat(0x302d28),0,1.15,.68);mesh(model,new THREE.BoxGeometry(.48,.42,.13),mat(0x302d28),0,1.38,.85);
+ const column=mesh(model,new THREE.CylinderGeometry(.035,.05,.48,12),metal,0,1.28,.18);column.rotation.x=-.5;const steering=new THREE.Group();steering.position.set(0,1.49,-.02);model.add(steering);const sw=mesh(steering,new THREE.TorusGeometry(.2,.025,8,24),mat(0x252725),0,0,0);sw.rotation.x=.7;
+ // exhaust, air intake, mirrors, steps, fenders
+ mesh(model,new THREE.CylinderGeometry(.055,.075,.7,12),metal,-.38,1.65,-.8);mesh(model,new THREE.CylinderGeometry(.09,.09,.08,12),mat(0x292b2a),-.38,2.02,-.8);
+ for(let side of [-1,1]){mesh(model,new THREE.BoxGeometry(.08,.45,.08),metal,side*.64,1.3,.3);mesh(model,new THREE.BoxGeometry(.25,.05,.14),metal,side*.74,1.48,.3);mesh(model,new THREE.BoxGeometry(.18,.08,.48),tractorRed,side*.54,.66,.52);
+ const fender=mesh(model,new THREE.BoxGeometry(.42,.12,.92),tractorRed,side*.7,1.12,.65);fender.rotation.x=.02;
+ const frameA=mesh(model,new THREE.CylinderGeometry(.035,.035,.98,10),metal,side*.48,1.72,.22);frameA.rotation.z=side*.1;
+ const frameB=mesh(model,new THREE.CylinderGeometry(.035,.035,.88,10),metal,side*.48,1.7,.83);frameB.rotation.z=side*.12;}
+ const rearL=wheel(model,.59,.3,-.68,.61,.62),rearR=wheel(model,.59,.3,.68,.61,.62),frontL=wheel(model,.34,.23,-.64,.36,-1.03),frontR=wheel(model,.34,.23,.64,.36,-1.03);
+ for(let side of [-1,1]){let f=mesh(model,new THREE.BoxGeometry(.34,.09,1.22),tractorRed,side*.68,1.12,.52);f.rotation.x=.02;}
+ const hitch=mesh(model,new THREE.BoxGeometry(.35,.16,.4),metal,0,.47,1.48);
+ root.userData={kind:'Tractor',model,wheels:[rearL,rearR,frontL,frontR],steering, speed:0,yaw:0,headlights:[],cargo:null};return root}
+function makeTruck(){const root=new THREE.Group();root.position.set(18,0,-1.5);scene.add(root);const model=new THREE.Group();root.add(model);
+ mesh(model,new THREE.BoxGeometry(1.72,.34,4.15),metal,0,.75,0);
+ mesh(model,new THREE.CapsuleGeometry(.68,.58,4,12),truckBlue,0,1.27,-1.2).rotation.x=Math.PI/2;
+ mesh(model,new THREE.BoxGeometry(1.48,.72,1.32),truckBlue,0,1.31,-1.18);
+ mesh(model,new THREE.BoxGeometry(1.28,.1,.12),chrome,0,.98,-1.91);
+ mesh(model,new THREE.BoxGeometry(1.04,.27,.055),mat(0x273638,.48),0,1.07,-1.91);
+ for(let i=0;i<8;i++)mesh(model,new THREE.BoxGeometry(.045,.23,.025),chrome,-.31+i*.088,1.07,-1.945);
+ mesh(model,new THREE.BoxGeometry(1.55,.12,.22),truckBlue,0,1.86,-1.08);
+ mesh(model,new THREE.BoxGeometry(1.25,.52,.055),glass,0,1.57,-1.89);
+ for(let side of [-1,1]){mesh(model,new THREE.BoxGeometry(.08,.48,.08),truckBlue,side*.73,1.31,-1.15);mesh(model,new THREE.BoxGeometry(.1,.22,.18),metal,side*.84,1.44,-1.3);mesh(model,new THREE.BoxGeometry(.18,.12,.06),lamp,side*.53,1.03,-1.9);mesh(model,new THREE.BoxGeometry(.07,.36,.08),metal,side*.78,1.34,-1.1);}
+ mesh(model,new THREE.BoxGeometry(1.48,1.0,2.25),cargoWood,0,1.36,.72);
+ for(let side of [-1,1]){mesh(model,new THREE.BoxGeometry(.08,1.05,2.3),mat(0x765035),side*.76,1.38,.72);for(let j=0;j<4;j++)mesh(model,new THREE.BoxGeometry(.04,.12,2.28),mat(0xb28a5b),side*.81,1.0+j*.24,.72)}
+ mesh(model,new THREE.BoxGeometry(1.5,.12,2.3),mat(0x765035),0,1.92,.72);
+ const wheels=[wheel(model,.38,.25,-.78,.39,-1.05),wheel(model,.38,.25,.78,.39,-1.05),wheel(model,.43,.28,-.78,.43,1.12),wheel(model,.43,.28,.78,.43,1.12)];
+ mesh(model,new THREE.BoxGeometry(1.9,.18,.18),metal,0,.48,1.95);
+ root.userData={kind:'Truck',model,wheels,steering:null,speed:0,yaw:0,headlights:[],cargo:null};return root}
+const tractor=makeTractor(),truck=makeTruck();
+const vehicles=[tractor,truck];let activeVehicle=null;let cameraMode=0;
+function nearestVehicle(){let best=null,dist=4.8;for(const v of vehicles){const d=Math.hypot(player.position.x-v.position.x,player.position.z-v.position.z);if(d<dist){dist=d;best=v}}return best}
+function toggleVehicle(){if(activeVehicle){player.visible=true;activeVehicle.userData.speed=0;activeVehicle=null;$('vehicleInfo').style.display='none';$('vehicleStat').textContent='On foot';message('Exited vehicle. Walk to a vehicle and press E to drive.');return}const v=nearestVehicle();if(!v){message('Move closer to the tractor or truck, then press E.');return}activeVehicle=v;player.visible=false;v.userData.speed=0;$('vehicleInfo').style.display='block';$('vehicleStat').textContent=v.userData.kind;message('Driving '+v.userData.kind+' — W accelerate, S brake/reverse, A/D steer, C camera.');}
+
+const keys={};addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(!keys[k]&&k==='e'&&started)toggleVehicle();if(!keys[k]&&k==='c'&&started)cameraMode=(cameraMode+1)%2;keys[k]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+let joy={x:0,y:0,active:false};const move=document.getElementById('move'),stick=document.getElementById('stick');
+function joyMove(e){const r=move.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy,lim=r.width*.32,len=Math.hypot(dx,dy);if(len>lim){dx*=lim/len;dy*=lim/len}joy.x=dx/lim;joy.y=dy/lim;stick.style.transform=`translate(${dx}px,${dy}px)`}
+move.addEventListener('pointerdown',e=>{joy.active=true;move.setPointerCapture(e.pointerId);joyMove(e)});move.addEventListener('pointermove',e=>{if(joy.active)joyMove(e)});function endJoy(){joy.active=false;joy.x=joy.y=0;stick.style.transform='translate(0,0)'}move.addEventListener('pointerup',endJoy);move.addEventListener('pointercancel',endJoy);
+let coins=35,water=10,harvest=0,pumpReady=false,started=false,msgTimer;
+let workers=0,poultry=false,eggs=0,extraPlots=0,cargo=0,visitingVillage=false;
+const $=id=>document.getElementById(id);
+$('vehicleBtn').onclick=toggleVehicle;
+function message(t){$('message').textContent=t;$('message').style.opacity=1;clearTimeout(msgTimer);msgTimer=setTimeout(()=>$('message').style.opacity=0,2200)}
+function updateHud(){$('coins').textContent=coins;$('water').textContent=water;$('harvest').textContent=harvest;$('cargo').textContent=cargo;$('waterBtn').disabled=water<=0;
+$('workers').textContent=workers;$('poultry').textContent=poultry?`Yes (${eggs} eggs)`:'No';
+$('sellBtn').textContent=harvest>0?`🛒 Sell crops (${harvest})`:'🛒 Sell crops';}
+function nearestPlot(){let best=null,d=999;for(const p of plots){let dd=Math.hypot(player.position.x-p.x,player.position.z-p.z);if(dd<bestDistance(p) && dd<3.1){d=dd;best=p}}return best}
+function bestDistance(p){return 3.1}
+function action(kind){if(!started)return;let p=nearestPlot();if(kind==='pump'){if(pumpReady){message('Solar pump is already charged!');return}water=10;pumpReady=true;updateHud();message('☀️ Solar pump refilled the village water tank!');return}if(!p){message('Walk closer to a farm plot first.');return}
+if(kind==='plant'){if(p.state!==0){message('This plot already has crops.');return}if(coins<2){message('Seeds cost 2 coins. Harvest a crop first or use the starter seeds!');if(harvest===0){p.state=1;p.growth=0;cropVisual(p);message('Starter seeds planted! Water them to help them grow.');return}return}coins-=2;p.state=1;p.growth=0;cropVisual(p);message('Seeds planted! Water the crop to help it grow.')}
+if(kind==='water'){if(p.state===0){message('Plant seeds here first.');return}if(p.state===3){message('This crop is ready to harvest!');return}if(water<=0){message('No water left. Use the Solar Pump!');return}water--;p.growth+=1;p.state=p.growth>=3?3:p.growth===2?2:1;cropVisual(p);message(p.state===3?'🌾 Crop matured! Harvest it now.':'💧 Crop watered. Growth stage '+p.state+'/3');}
+if(kind==='harvest'){if(p.state!==3){message(p.state===0?'Nothing planted here yet.':'Crop is still growing. Water it more!');return}p.state=0;p.growth=0;cropVisual(p);harvest++;updateHud();message('🌾 Crops stored! Visit the market button to sell them for 8 coins each.');}
+updateHud()}
+$('plant').onclick=()=>action('plant');$('waterBtn').onclick=()=>action('water');$('harvestBtn').onclick=()=>action('harvest');$('pumpBtn').onclick=()=>action('pump');
+$('sellBtn').onclick=()=>{if(harvest<1){message('No crops in storage. Harvest some crops first!');return}let sold=harvest;coins+=sold*12;harvest=0;updateHud();message(`🛒 Market sale complete: ${sold} crop units sold for ${sold*12} coins!`);};
+$('hireBtn').onclick=()=>{if(workers>=4){message('You have reached the 4-worker limit for this village.');return}if(coins<8){message('Hiring costs 8 coins. Sell crops at the market first.');return}coins-=8;workers++;updateHud();message('🧑‍🌾 Worker hired! Workers help your village thrive.');};
+$('expandBtn').onclick=()=>{if(extraPlots>=12){message('You have unlocked all 12 expansion fields!');return}const cost=12+extraPlots*5;if(coins<cost){message('This land expansion costs '+cost+' coins. Sell crops and return to buy more land.');return}coins-=cost;extraPlots++;addExtraPlot(extraPlots);updateHud();message('🌾 New farmland purchased! Expansion '+extraPlots+'/12. Next land costs more.');};
+$('poultryBtn').onclick=()=>{if(poultry){if(eggs<1){message('Your hens are laying eggs. Check back after a little farming!');return}let earned=eggs*3;coins+=earned;message(`🥚 Sold ${eggs} eggs for ${earned} coins!`);eggs=0;updateHud();return}if(coins<22){message('Poultry farm costs 22 coins. Sell crops and save up!');return}coins-=22;poultry=true;makeCoop();updateHud();message('🐔 Poultry farm unlocked! Eggs will bring extra income.');};
+
+
+// Neighbouring village trade destination, route signage and visible grain cargo.
+const routeMat=mat(0xd4b78a);
+box(scene,5,.08,62,mat(0x8f8b7d),19,.035,-1,false);box(scene,4.4,.035,62,mat(0x9b9788),19,.085,-1,false);for(let rz=-28;rz<27;rz+=4)box(scene,.12,.025,1.7,mat(0xf2df9e),19,.11,rz,false);
+// Long connecting highway to the distant second village.
+box(scene,91,.09,5.2,mat(0x777b79),59,.045,-1,false);box(scene,91,.035,4.65,mat(0x969891),59,.095,-1,false);for(let rx=16;rx<104;rx+=5)box(scene,2.1,.025,.12,mat(0xf3e6b1),rx,.12,-1,false);
+for(let rx=24;rx<100;rx+=12){cylinder(scene,.06,.08,2.1,M.dark,rx,1.05,2.8,8);sphere(scene,.28,M.gold,rx,2.15,2.8,[1,.18,.18]);}
+function makeSack(parent,x,y,z){
+ const sack=new THREE.Mesh(new THREE.SphereGeometry(.34,12,10),mat(0xd6bd83));
+ sack.scale.set(.8,1.15,.8);sack.position.set(x,y,z);sack.castShadow=true;parent.add(sack);
+}
+const cargoGroup=new THREE.Group();cargoGroup.position.set(0,1.82,.62);truck.userData.model.add(cargoGroup);
+function renderCargo(){while(cargoGroup.children.length)cargoGroup.remove(cargoGroup.children[0]);for(let i=0;i<cargo;i++)makeSack(cargoGroup,-.48+(i%3)*.48,.22+Math.floor(i/3)*.34,-.5+Math.floor(i/3)*.62);}
+const destination=new THREE.Group();destination.position.set(104,0,-1);scene.add(destination);
+box(destination,12,.12,10,M.grass2,0,.02,0,false);
+box(destination,3,.08,22,routeMat,-5,.05,0,false);
+function villageHouse(parent,x,z){solidColliders.push({x:104+x,z:-1+z,hx:1.8,hz:1.65});box(parent,2.8,2,2.5,M.wall,x,1,z);let r=new THREE.Mesh(new THREE.ConeGeometry(2.3,1.3,4),M.roof);r.rotation.y=Math.PI/4;r.position.set(x,2.65,z);r.castShadow=true;parent.add(r);box(parent,.65,1.1,.12,M.wood,x,.55,z+1.3);}
+villageHouse(destination,-3,-2);villageHouse(destination,3,2);
+// Detailed destination homes and a richer market street
+for(let i=0;i<7;i++){let hg=new THREE.Group();hg.position.set(-7+(i%2)*8,0,-10+Math.floor(i/2)*7);destination.add(hg);solidColliders.push({x:104+hg.position.x,z:-1+hg.position.z,hx:2.5,hz:2.3});box(hg,3.8,2.5,3.2,mat(i%2?0xe9c99a:0xf1ddb7),0,1.25,0);let ra=box(hg,4.2,.18,2.05,mat(i%2?0x8f4036:0x6c5142),0,2.6,-.62);ra.rotation.x=-.42;let rb=box(hg,4.2,.18,2.05,mat(0xa75242),0,2.6,.62);rb.rotation.x=.42;box(hg,.7,1.3,.1,mat(0x67442e),.65,.65,1.65);for(let wx of [-1.15,1.3]){box(hg,.65,.65,.08,mat(0x5e9eb7),wx,1.45,1.65);box(hg,.08,.72,.1,mat(0xf6e5c7),wx,1.45,1.69)}}
+box(destination,4,.2,2,M.wood,0,.9,-3);
+box(destination,4,.12,1.5,mat(0x477bba),0,1.9,-3);
+for(let i=0;i<4;i++)makeSack(destination,-1.2+i*.8,1.2,-2.7);
+const mapPanel=document.createElement('div');
+mapPanel.className='panel';mapPanel.style.cssText='display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;padding:18px;min-width:280px;text-align:center;background:rgba(14,28,30,.96)';
+mapPanel.innerHTML='<b>🗺️ VILLAGE TRADE MAP</b><p>🏡 Your Farm ━━━━━━━━━━━━━ 🛣️ ━━━━━━━━━━━━━ 🏘️ Distant Village</p><p>The second village is about 90 metres down the connecting road. Drive there to sell cargo for <b>18 coins per sack</b>.</p><button id="closeMap">Close map</button>';
+document.body.appendChild(mapPanel);
+$('mapBtn').onclick=()=>{mapPanel.style.display='block';};
+mapPanel.querySelector('#closeMap').onclick=()=>mapPanel.style.display='none';
+$('loadBtn').onclick=()=>{if(visitingVillage){message('Return to your farm before loading grain.');return}if(harvest<1){message('Harvest crops first, then load grain sacks.');return}let n=Math.min(6-cargo,harvest);if(n<=0){message('Cargo is full! Deliver it to the neighbouring village.');return}cargo+=n;harvest-=n;renderCargo();updateHud();message('📦 Loaded '+n+' grain sacks into the storehouse cargo.');};
+$('travelBtn').onclick=()=>{const t=activeVehicle||player;const d=Math.hypot(t.position.x-104,t.position.z+4);if(!visitingVillage){if(cargo<1){message('Load at least one grain sack at the storehouse before delivery.');return}if(d>8){message('Drive or walk along the road to the neighbouring village market. No teleporting!');return}visitingVillage=true;message('🏘️ You reached the neighbouring village. Sell cargo at the market.');$('travelBtn').textContent='🏡 Return to farm';}else{if(Math.hypot(t.position.x-12,t.position.z+5)>8){message('Return to the farm/storehouse area before switching destination status.');return}visitingVillage=false;message('Returned to the farm area.');$('travelBtn').textContent='🚚 Deliver to village';}};
+const originalSell=$('sellBtn').onclick;
+$('sellBtn').onclick=()=>{if(visitingVillage){const t=activeVehicle||player;if(Math.hypot(t.position.x-104,t.position.z+4)>9){message('Go to the village market stall to sell your cargo.');return}if(cargo<1){message('No grain sacks to sell. Load cargo back at your farm.');return}let sold=cargo;coins+=sold*18;cargo=0;renderCargo();updateHud();message('🏘️ Village market bought '+sold+' grain sacks for '+sold*18+' coins!');return}originalSell();};
+
+$('start').onclick=()=>{$('overlay').style.display='none';started=true;message('Welcome farmer! Walk with WASD. Press E beside the tractor or truck to drive. Deliver grain by physically travelling along the road.');};
+function update(dt){if(!started)return;
+ const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0), steer=(keys.a||keys.arrowleft?1:0)-(keys.d||keys.arrowright?1:0);
+ if(activeVehicle){const u=activeVehicle.userData;const accel=activeVehicle===tractor?8:6.5,max=activeVehicle===tractor?11:15;u.speed+=forward*accel*dt;u.speed*=Math.pow(forward===0?.82:.985,dt*10);u.speed=THREE.MathUtils.clamp(u.speed,-4,max);if(Math.abs(u.speed)>.08)u.yaw+=steer*dt*(.8+Math.min(Math.abs(u.speed)/6,1.2))*Math.sign(u.speed);activeVehicle.rotation.y=u.yaw;
+ const nx=activeVehicle.position.x-Math.sin(u.yaw)*u.speed*dt,nz=activeVehicle.position.z-Math.cos(u.yaw)*u.speed*dt;
+ // Road/terrain limits keep the vehicle in the playable world.
+ const bounded=clampWorld(nx,nz,1);const vehicleRadius=activeVehicle===truck?1.45:1.1;if(!blockedAt(bounded.x,bounded.z,vehicleRadius)){activeVehicle.position.x=bounded.x;activeVehicle.position.z=bounded.z;}else{u.speed=0;message('Blocked: steer around the building or gate.');}
+ u.wheels.forEach((w,i)=>{w.rotation.x+=u.speed*dt/(i<2?.43:.35);if(i>=2&&i<4)w.rotation.y=steer*.42;});if(u.steering)u.steering.rotation.z=steer*.38;
+ $('vehicleStat').textContent=u.kind+' · '+Math.round(Math.abs(u.speed)*3.6)+' km/h';
+ }else{let x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x;let z=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)+joy.y;let len=Math.hypot(x,z);if(len>1){x/=len;z/=len}if(len>.05){player.position.x+=x*6*dt;player.position.z+=z*6*dt;player.rotation.y=Math.atan2(x,z);body.position.y=1.0+Math.sin(performance.now()*.012)*.025;armL.rotation.z=-.12+Math.sin(performance.now()*.012)*.12;armR.rotation.z=.12-Math.sin(performance.now()*.012)*.12;legL.rotation.x=Math.sin(performance.now()*.012)*.22;legR.rotation.x=-Math.sin(performance.now()*.012)*.22;}const boundedPlayer=clampWorld(player.position.x,player.position.z,.45);if(blockedAt(boundedPlayer.x,boundedPlayer.z,.48)){player.position.x-=x*6*dt;player.position.z-=z*6*dt;}player.position.x=THREE.MathUtils.clamp(player.position.x,-62,128);player.position.z=THREE.MathUtils.clamp(player.position.z,-55,55);$('vehicleStat').textContent='On foot';}
+ const target=activeVehicle?activeVehicle:player;let desired;if(activeVehicle){const u=activeVehicle.userData;const back=cameraMode===0?new THREE.Vector3(Math.sin(u.yaw)*8,5.0,Math.cos(u.yaw)*8):new THREE.Vector3(Math.sin(u.yaw)*2.2,2.8,Math.cos(u.yaw)*2.2);desired=new THREE.Vector3(target.position.x+back.x,target.position.y+back.y,target.position.z+back.z);}else desired=new THREE.Vector3(target.position.x+5,target.position.y+6.5,target.position.z+8.5);camera.position.lerp(desired,1-Math.pow(.001,dt));camera.lookAt(target.position.x,target.position.y+(activeVehicle?1.1:1.2),target.position.z);
+ if(poultry && Math.random()<dt*.06)eggs=Math.min(20,eggs+1);for(const v of villagers){v.rotation.y=Math.sin(performance.now()*.0007+v.position.x)*.12;}for(const p of plots){p.marker.visible=!activeVehicle&&Math.hypot(player.position.x-p.x,player.position.z-p.z)<3.1;p.marker.scale.setScalar(1+Math.sin(performance.now()*.006)*.12)}
+}
+
+function blockedAt(x,z,radius=0.65){
+ for(const c of solidColliders){if(Math.abs(x-c.x)<c.hx+radius && Math.abs(z-c.z)<c.hz+radius)return true;}
+ return false;
+}
+function clampWorld(x,z,r=1){return {x:THREE.MathUtils.clamp(x,-62,128),z:THREE.MathUtils.clamp(z,-55,55)};}
+
+const clock=new THREE.Clock();
+function loop(){requestAnimationFrame(loop);let dt=Math.min(clock.getDelta(),.04);update(dt);renderer.render(scene,camera)}loop();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+updateHud();
+</script>
+</body>
+</html>
